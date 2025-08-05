@@ -59,6 +59,9 @@
             <div class="flex items-center w-1/3 justify-center">{{ message }}</div>
           {% endif %}
           <div class="w-1/3 flex items-center justify-end">
+            {% if header.settings.header_design == 'logo-left__2l' and header.settings.show_account_icon %}
+              {% render 'header-option-item__account', display_by: 'icon' %}
+            {% endif %}
             {% if show_stores_page %}
               <a
                 href="{{ pages[settings.find_store].url | default: '#' }}"
