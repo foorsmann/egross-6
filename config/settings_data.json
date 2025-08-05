@@ -212,7 +212,7 @@
           "secondary_menu": "",
           "mobile_menu": "",
           "uppercase_parent_level": false,
-          "search": "show_icon",
+          "search": "show_full",
           "show_account_icon": true,
           "show_cart_icon": true,
           "show_wishlist_icon": true,
