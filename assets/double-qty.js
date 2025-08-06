@@ -152,26 +152,10 @@ var BUTTON_CLASS = 'double-qty-btn';
 
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
-
-  function attachQtyInputListeners(){
+  function initQtyInputs(){
     var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
     document.querySelectorAll(selectors).forEach(function(input){
-      if(input.dataset.qtyListener) return;
-      input.dataset.qtyListener = '1';
-      ['input','change','blur'].forEach(function(ev){
-        input.addEventListener(ev, function(){
-          validateAndHighlightQty(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        });
-      });
-      input.addEventListener('keypress', function(e){
-        if(e.key === 'Enter'){
-          validateAndHighlightQty(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        }
-      });
+      if(input.hasAttribute('data-collection-quantity-input')) return;
       validateAndHighlightQty(input);
       updateQtyButtonsState(input);
       syncOtherQtyInputs(input);
@@ -255,76 +239,102 @@ var BUTTON_CLASS = 'double-qty-btn';
     updateQtyButtonsState(input);
   }
 
-  function findQtyInput(btn) {
-    let wrapper = btn.previousElementSibling;
-    if (wrapper && wrapper.classList && wrapper.classList.contains('quantity-input')) {
-      let input = wrapper.querySelector('input[type="number"]');
-      if (input) return input;
+  function findQtyInput(btn){
+    var container = btn.closest('.quantity-input');
+    if(container){
+      var inp = container.querySelector('input[type="number"][data-quantity-input]') || container.querySelector('input[type="number"]');
+      if(inp) return inp;
     }
-    if (btn.previousElementSibling && btn.previousElementSibling.tagName === 'INPUT') {
-      return btn.previousElementSibling;
+    var pid = btn.getAttribute('data-product-id');
+    if(pid){
+      return document.querySelector('input[data-product-id="'+pid+'"][data-quantity-input]');
     }
-    return btn.parentNode.querySelector('input[type="number"]');
+    return null;
   }
-
-  function initDoubleQtyButtons() {
-    document.querySelectorAll('.' + BUTTON_CLASS).forEach(function(btn){
-      if (btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
-      var input = findQtyInput(btn);
-      if (!input) return;
-      var storedMin = parseInt(btn.getAttribute('data-original-min-qty'), 10);
-      var min;
-      if(isNaN(storedMin)){
-        min = parseInt(input.getAttribute('data-min-qty'), 10) || 1;
-        btn.setAttribute('data-original-min-qty', min);
-      }else{
-        min = storedMin;
-      }
-      var template = btn.getAttribute('data-label-template') || btn.textContent;
-      var label = template.replace('{min_qty}', min);
-      btn.setAttribute('aria-label', label);
-      btn.textContent = label;
-
-      if (btn.dataset.doubleQtyActive) return;
-      btn.dataset.doubleQtyActive = '1';
-
-      function updateBtnState() {
-        var max = input.max ? parseInt(input.max, 10) : 9999;
-        var val = parseInt(input.value, 10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max, 10) : Infinity;
-        var current = parseInt(input.value, 10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        updateBtnState();
-      });
-
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
+  function updateDoubleQtyBtn(btn, input){
+    if(!input) return;
+    var storedMin = parseInt(btn.getAttribute('data-original-min-qty'), 10);
+    var min;
+    if(isNaN(storedMin)){
+      min = parseInt(input.getAttribute('data-min-qty'), 10) || 1;
+      btn.setAttribute('data-original-min-qty', min);
+    }else{
+      min = storedMin;
+    }
+    var template = btn.getAttribute('data-label-template') || btn.textContent;
+    var label = template.replace('{min_qty}', min);
+    btn.setAttribute('aria-label', label);
+    btn.textContent = label;
+    var max = input.max ? parseInt(input.max,10) : 9999;
+    var val = parseInt(input.value,10) || 1;
+    btn.disabled = val >= max;
+  }
+  function initDoubleQtyButtons(){
+    document.querySelectorAll('.'+BUTTON_CLASS).forEach(function(btn){
+      if(btn.classList.contains('collection-double-qty-btn') || btn.hasAttribute('data-collection-double-qty')) return;
+      updateDoubleQtyBtn(btn, findQtyInput(btn));
     });
+  }
+  var doubleQtyDelegatesBound = false;
+  function attachDoubleQtyDelegates(){
+    if(doubleQtyDelegatesBound) return;
+    doubleQtyDelegatesBound = true;
+    function handleInputChange(e){
+      var input = e.target.closest('input[data-quantity-input]');
+      if(!input || input.hasAttribute('data-collection-quantity-input')) return;
+      validateAndHighlightQty(input);
+      updateQtyButtonsState(input);
+      syncOtherQtyInputs(input);
+      var container = input.closest('.quantity-input');
+      var btn = container ? container.querySelector('.'+BUTTON_CLASS) : null;
+      if(btn && !btn.classList.contains('collection-double-qty-btn')) updateDoubleQtyBtn(btn, input);
+      var pid = input.getAttribute('data-product-id');
+      if(pid){
+        document.querySelectorAll('.'+BUTTON_CLASS+'[data-product-id="'+pid+'"]').forEach(function(b){
+          if(b !== btn) updateDoubleQtyBtn(b, findQtyInput(b) || input);
+        });
+      }
+    }
+    document.addEventListener('input', handleInputChange, true);
+    document.addEventListener('change', handleInputChange, true);
+    document.addEventListener('keypress', function(e){
+      if(e.key === 'Enter') handleInputChange(e);
+    }, true);
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.'+BUTTON_CLASS);
+      if(!btn || btn.classList.contains('collection-double-qty-btn') || btn.hasAttribute('data-collection-double-qty')) return;
+      var input = findQtyInput(btn);
+      if(!input) return;
+      e.preventDefault();
+      var step = parseInt(input.getAttribute('data-min-qty'),10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max,10) : Infinity;
+      var current = parseInt(input.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlightQty(input);
+      updateQtyButtonsState(input);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      updateDoubleQtyBtn(btn, input);
+    }, true);
+    document.addEventListener('focus', function(e){
+      var btn = e.target.closest('.'+BUTTON_CLASS);
+      if(btn) btn.classList.add('focus');
+    }, true);
+    document.addEventListener('blur', function(e){
+      var btn = e.target.closest('.'+BUTTON_CLASS);
+      if(btn) btn.classList.remove('focus');
+    }, true);
   }
 
   function initAll(){
     applyMinQty();
     initDoubleQtyButtons();
-    attachQtyInputListeners();
+    initQtyInputs();
     attachQtyButtonListeners();
+    attachDoubleQtyDelegates();
   }
   document.addEventListener('DOMContentLoaded', initAll);
   window.addEventListener('shopify:section:load', initAll);
