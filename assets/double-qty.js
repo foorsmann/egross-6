@@ -153,6 +153,84 @@ var BUTTON_CLASS = 'double-qty-btn';
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
 
+  // NEW: clear "capped" state when cart no longer at max
+  function clearCappedQtyState(input){
+    if(!input) return;
+    if(input.dataset.prevMin){
+      input.min = input.dataset.prevMin;
+      delete input.dataset.prevMin;
+    }
+    if(input.dataset.prevMinQtyAttr !== undefined){
+      input.setAttribute('data-min-qty', input.dataset.prevMinQtyAttr);
+      delete input.dataset.prevMinQtyAttr;
+    }
+    input.classList.remove('text-red-600');
+    input.style.color = '';
+    if(typeof validateAndHighlightQty === 'function'){ validateAndHighlightQty(input); }
+    if(typeof updateQtyButtonsState === 'function'){ updateQtyButtonsState(input); }
+  }
+
+  // NEW: clear capped state for collection quick add inputs
+  function clearCollectionCappedQtyState(input){
+    if(!input) return;
+    if(input.dataset.prevMin){
+      input.min = input.dataset.prevMin;
+      delete input.dataset.prevMin;
+    }
+    if(input.dataset.prevMinQtyAttr !== undefined){
+      input.setAttribute('data-collection-min-qty', input.dataset.prevMinQtyAttr);
+      delete input.dataset.prevMinQtyAttr;
+    }
+    input.classList.remove('text-red-600');
+    input.style.color = '';
+    // trigger existing listeners to re-validate and update buttons
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+
+  // NEW: automatically cap quantity inputs when cart already at max
+  async function checkCartMaxedVariants(){
+    let cart;
+    try{
+      cart = await fetch('/cart.js').then(r=>r.json());
+    }catch(err){ return; }
+    var qtyByVariant = {};
+    (cart.items || []).forEach(function(item){
+      qtyByVariant[item.variant_id] = item.quantity;
+    });
+    // product, sticky ATC, quick view etc.
+    document.querySelectorAll('input[data-quantity-input]').forEach(function(input){
+      if(input.closest('.scd-item') || input.closest('[data-cart-item]')) return;
+      var max = parseInt(input.max,10);
+      if(!max || !isFinite(max)) return;
+      var form = input.closest('form');
+      var idField = form ? form.querySelector('[name="id"]') : null;
+      var variantId = idField ? parseInt(idField.value,10) : NaN;
+      if(!variantId) return;
+      var cartQty = qtyByVariant[variantId] || 0;
+      if(cartQty >= max){
+        if(typeof applyCappedQtyState === 'function'){ applyCappedQtyState(input); }
+      }else{
+        clearCappedQtyState(input);
+      }
+    });
+    // collection quick add inputs
+    document.querySelectorAll('input[data-collection-quantity-input]').forEach(function(input){
+      var max = parseInt(input.max,10);
+      if(!max || !isFinite(max)) return;
+      var form = input.closest('form');
+      var idField = form ? form.querySelector('[name="id"]') : null;
+      var variantId = idField ? parseInt(idField.value,10) : NaN;
+      if(!variantId) return;
+      var cartQty = qtyByVariant[variantId] || 0;
+      if(cartQty >= max){
+        if(typeof collectionApplyCappedQtyState === 'function'){ collectionApplyCappedQtyState(input); }
+      }else{
+        clearCollectionCappedQtyState(input);
+      }
+    });
+  }
+
   function attachQtyInputListeners(){
     var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
     document.querySelectorAll(selectors).forEach(function(input){
@@ -325,6 +403,7 @@ var BUTTON_CLASS = 'double-qty-btn';
     initDoubleQtyButtons();
     attachQtyInputListeners();
     attachQtyButtonListeners();
+    checkCartMaxedVariants(); // NEW: ensure inputs reflect cart caps
   }
   document.addEventListener('DOMContentLoaded', initAll);
   window.addEventListener('shopify:section:load', initAll);
