@@ -9510,9 +9510,7 @@ class Search {
       close: '[data-close-search]',
       moreResult: '[data-more-result]',
       resultContent: '[data-result]',
-      popularSearches: '[data-popular-searches]',
-      popularSearchItems: ['[data-ps-item]'],
-      searchItemsWrapper: '[data-search-items-wrapper]',
+        searchItemsWrapper: '[data-search-items-wrapper]',
       searchItems: ['[data-search-item]'],
       searchQuery: '[data-query]',
       searchMessage: '[data-message]'
@@ -9560,7 +9558,6 @@ class Search {
             this.toggleSpinnerLoading(false);
             this.toggleClearSearch(false);
             this.toggleSearchContent(false);
-            this.togglePopularSearches(true);
           }
         });
       }
@@ -9584,7 +9581,6 @@ class Search {
         input.focus();
         this.toggleSpinnerLoading(false);
         this.toggleSearchContent(false);
-        this.togglePopularSearches(true);
       });
       close.addEventListener('click', e => {
         this.toggleSearchPopup(false);
@@ -9594,16 +9590,7 @@ class Search {
           this.toggleSearchPopup(false);
         }
       });
-      this.setPopularSearchesLink();
     });
-
-    _defineProperty(this, "setPopularSearchesLink", () => {
-      const {
-        popularSearchItems
-      } = this.domNodes;
-      popularSearchItems.forEach(itm => itm.href = createSearchLink(itm.dataset.psQuery));
-    });
-
     _defineProperty(this, "toggleSpinnerLoading", show => {
       const {
         loading,
@@ -9612,14 +9599,6 @@ class Search {
       submit.style.visibility = show ? 'hidden' : 'visible';
       loading.style.visibility = show ? 'visible' : 'hidden';
     });
-
-    _defineProperty(this, "togglePopularSearches", show => {
-      const {
-        popularSearches
-      } = this.domNodes;
-      popularSearches.style.display = show ? "" : "none";
-    });
-
     _defineProperty(this, "toggleClearSearch", show => {
       const {
         clear
@@ -9642,7 +9621,6 @@ class Search {
           const productSuggestions = suggestions?.resources?.results?.products ?? [];
           this.toggleSpinnerLoading(false);
           this.renderSearchQueryAndMessage(productSuggestions.length);
-          this.togglePopularSearches(!productSuggestions.length);
           this.renderSearchResult(productSuggestions);
           this.toggleSearchContent(true);
         } catch (err) {
