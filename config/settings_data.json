@@ -107,7 +107,6 @@
     "default_country_estimate_shipping": "RO",
     "search_by_tag": true,
     "search_by_body": true,
-    "popular_search_queries": "",
     "search_unavailable_products": "LAST",
     "wishlist_page": "wishlist-page",
     "agree_text": "<p>Sunt de acord cu <a href=\"/pages/termeni-conditii\" target=\"_blank\" title=\"Termeni & Conditii\">Termenii si Conditiile</a></p>",

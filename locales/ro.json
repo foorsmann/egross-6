@@ -50,7 +50,6 @@
       "title": "Caută în magazinul nostru",
       "placeholder": "Caută produse",
       "placeholder_short": "Căutare",
-      "popular_searches": "Căutări populare",
       "results_for": "rezultate pentru",
       "more_results": "Mai multe rezultate",
       "heading": {
@@ -65,7 +64,7 @@
       "no_results_html": "Încercați un alt termen de căutare sau reveniți la <a href=\"/\">pagina de pornire</a>."
     },
     "newsletter_form": {
-      "confirmation": "Multumesc pentru abonarea"
+        "confirmation": "Mulțumesc pentru abonare"
     },
     "payment": {
       "options": "Opțiuni de plată"
@@ -83,7 +82,7 @@
   },
   "sections": {
     "video": {
-      "play": "Juca"
+        "play": "Joacă"
     },
     "collection_template": {
       "from": "Din",
@@ -104,13 +103,13 @@
       "by_author": "lângă",
       "posted_in": "pe",
       "tags": "Tags:",
-      "read_more": "Citeste mai mult",
+        "read_more": "Citește mai mult",
       "related_title": "Articole legate de",
       "next_post": "Următor",
       "previous_post": "Precedent"
     },
     "comments": {
-      "title": "Lasi un comentariu",
+      "title": "Lași un comentariu",
       "sub_title": "Adresa ta de e-mail nu va fi publicată.",
       "name": "Numele tău*",
       "email": "Adresa ta de e-mail*",
@@ -118,8 +117,8 @@
       "post": "Trimite acum",
       "reply": "Răspunde",
       "at_time": "la",
-      "success_moderated": "Comentariul tau a fost postat cu succes. Îl vom publica în puțin timp, deoarece blogul nostru este moderat.",
-      "success": "Comentariul tau a fost postat cu succes! Vă mulțumesc!",
+      "success_moderated": "Comentariul tău a fost postat cu succes. Îl vom publica în puțin timp, deoarece blogul nostru este moderat.",
+      "success": "Comentariul tău a fost postat cu succes! Vă mulțumesc!",
       "comments_with_count": {
         "one": "{{ count }} comentariu",
         "other": "{{ count }} comments"
@@ -127,12 +126,12 @@
     }
   },
   "sidebar": {
-    "clear_all": "CLAR TOATE"
+    "clear_all": "Șterge tot"
   },
   "cart": {
     "general": {
-      "title": "Cosul",
-      "remove": "Sterge",
+      "title": "Coșul",
+      "remove": "Șterge",
       "note": "Instrucțiuni speciale pentru vânzător",
       "drawer_note": "Notă",
       "shipping": "Expediere",
@@ -144,14 +143,14 @@
       "taxes_included_and_shipping_policy_html": "Taxe incluse. <a href=\"{{ link }}\">Expediere</a> calculat la checkout.",
       "enter_discount_code": "Introduceți codul de reducere aici",
       "checkout": "Consultă",
-      "viewcart": "Vezi cosul",
+      "viewcart": "Vezi coșul",
       "empty": "Coșul este în prezent gol.",
       "coupon_title": "Adăugați un cod de reducere",
       "estimate_shipping_title": "Estimați tarifele de expediere",
       "estimate_shipping_button": "Calculați tarifele de expediere",
       "note_title": "Adăugarea notei pentru vânzător",
-      "cancel": "Anula",
-      "save": "Salva",
+      "cancel": "Anulează",
+      "save": "Salvează",
       "zipcode_validate": "Codul poștal nu poate fi necompletat",
       "shipping_rates_result": "Am găsit {{count}} tarifele de expediere pentru adresa dvs.",
       "no_found_shipping_rate": "Nu există tarife de expediere pentru adresa dvs.",
@@ -178,7 +177,7 @@
       "collection_items": "{{ title }} items"
     },
     "sidebar": {
-      "clear_all": "Clar toate"
+      "clear_all": "Șterge tot"
     },
     "toolbar": {
       "show_filter": "Filtru",
@@ -259,7 +258,7 @@
       "phone": "Telefon",
       "set_default": "Setarea ca adresă implicită",
       "update": "Adresa de actualizare",
-      "cancel": "Anula",
+      "cancel": "Anulează",
       "edit": "Editare",
       "delete": "Șterge",
       "delete_confirm": "Sunteți sigur că doriți să ștergeți această adresă?"
@@ -308,7 +307,7 @@
       "title": "Resetarea parolei",
       "email": "E-mail",
       "submit": "Prezinte",
-      "cancel": "Anula",
+      "cancel": "Anulează",
       "subtext": "Vă vom trimite un e-mail pentru a vă reseta parola.",
       "success": "V-am trimis un e-mail cu un link pentru a vă actualiza parola."
     },
@@ -334,23 +333,23 @@
       "product_description": "Această zonă este utilizată pentru a descrie detaliile produsului dvs. Spuneți-le clienților despre aspectul, senzația și stilul produsului dvs. Adăugați detalii despre culoare, materialele utilizate, dimensionarea și locul în care a fost făcută.",
       "collection_title": "Exemplu de titlu de colecție",
       "no_content": "Această secțiune nu include în prezent niciun conținut. Adăugați conținut la această secțiune utilizând bara laterală.",
-      "blog_readmore": "Citeste mai mult",
+      "blog_readmore": "Citește mai mult",
       "blog_tag": "ConceptSGM"
     }
   },
   "layout": {
     "back_to_shopping": "Înapoi la cumpărături",
-    "back": "Spate",
+    "back": "Înapoi",
     "wishlist": {
       "title": "Listă de dorințe",
       "no_products": "Nu au fost adăugate produse pe pagina de wishlist."
     },
     "compare": {
-      "title": "Compara",
+      "title": "Compară",
       "no_products": "Nu au fost adăugate produse la pagina de comparare."
     },
     "cart": {
-      "title": "Car"
+      "title": "Coș"
     },
     "customer": {
       "account": "Cont",
@@ -373,10 +372,10 @@
       "on_sale": "La vânzare",
       "from_text_html": "De la {{ price }}",
       "quantity": "Cantitate",
-      "add_to_cart": "Adaugă la coş",
+      "add_to_cart": "Adaugă la coș",
       "add_to_wishlist": "Adăugați la lista de dorințe",
       "remove_from_wishlist": "Eliminați din lista de dorințe",
-      "add_to_compare": "Compara",
+        "add_to_compare": "Compară",
       "add_a_question": "Pune o întrebare",
       "remove_from_compare": "Eliminați din comparație",
       "quick_add": "Adăugare rapidă",
@@ -406,7 +405,7 @@
       "vendor": "Furnizor",
       "type": "Tip",
       "sku": "SKU",
-      "collections": "Colecţii",
+      "collections": "Colecții",
       "social_share": "Acțiune",
       "copy_link": "Copiați linkul",
       "unit_price_label": "Preț unitar",
@@ -414,7 +413,7 @@
       "save_html": "Salvați <span class=\"sf-currency sf-currency--saved font-medium\" data-saved-price>{{ amount }}</span>",
       "recently_viewed_products": "Produse vizualizate recent",
       "select_options": "Selectarea opțiunilor",
-      "sold": "Vîndut",
+      "sold": "Vândut",
       "available": "Disponibil",
       "xr_button": "Vizualizarea în spațiul dvs.",
       "xr_button_label": "Vizualizarea în spațiul dvs., încarcă elementul în fereastra de realitate augmentată",
