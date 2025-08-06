@@ -126,6 +126,7 @@
         input.addEventListener(ev, function(){
           validateAndHighlight(input);
           updateQtyButtonsState(input);
+          updateDoubleQtyBtnState(input);
           syncOtherQtyInputs(input);
         });
       });
@@ -133,11 +134,13 @@
         if(e.key === 'Enter'){
           validateAndHighlight(input);
           updateQtyButtonsState(input);
+          updateDoubleQtyBtnState(input);
           syncOtherQtyInputs(input);
         }
       });
       validateAndHighlight(input);
       updateQtyButtonsState(input);
+      updateDoubleQtyBtnState(input);
     });
   }
   function adjustQuantity(input, delta, baseVal){
@@ -231,8 +234,28 @@
     }
     return null;
   }
-  function initDoubleQtyButtons(){
+  function findDoubleQtyBtn(input){
+    var group = input.closest('.collection-qty-group');
+    if(group){
+      var b = group.querySelector('.collection-double-qty-btn');
+      if(b) return b;
+    }
+    var pid = input.getAttribute('data-collection-product-id');
+    if(pid){
+      return document.querySelector('.collection-double-qty-btn[data-collection-product-id="'+pid+'"]');
+    }
+    return null;
+  }
+  function updateDoubleQtyBtnState(input){
+    var btn = findDoubleQtyBtn(input);
+    if(!btn) return;
+    var max = input.max ? parseInt(input.max,10) : 9999;
+    var val = parseInt(input.value,10) || 1;
+    btn.disabled = val >= max;
+  }
+  function setupDoubleQtyButtons(){
     document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
+      if(btn.dataset.collectionDoubleQtyInit) return;
       var input = findQtyInput(btn);
       if(!input) return;
       var storedMin = parseInt(btn.getAttribute('data-collection-original-min-qty'),10);
@@ -247,38 +270,35 @@
       var label = template.replace('{min_qty}', min);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
-      if(btn.dataset.collectionDoubleQtyActive) return;
-      btn.dataset.collectionDoubleQtyActive = '1';
-      function updateBtnState(){
-        var max = input.max ? parseInt(input.max,10) : 9999;
-        var val = parseInt(input.value,10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max,10) : Infinity;
-        var current = parseInt(input.value,10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input',{bubbles:true}));
-        input.dispatchEvent(new Event('change',{bubbles:true}));
-        updateBtnState();
-        clearTextSelection();
-        btn.blur();
-      });
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
+      btn.dataset.collectionDoubleQtyInit = '1';
+      updateDoubleQtyBtnState(input);
     });
+  }
+  var doubleQtyClickListenerBound = false;
+  function attachDoubleQtyClickListener(){
+    if(doubleQtyClickListenerBound) return;
+    doubleQtyClickListenerBound = true;
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.collection-double-qty-btn');
+      if(!btn) return;
+      var input = findQtyInput(btn);
+      if(!input) return;
+      e.preventDefault();
+      var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max,10) : Infinity;
+      var current = parseInt(input.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlight(input);
+      updateQtyButtonsState(input);
+      updateDoubleQtyBtnState(input);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      clearTextSelection();
+      btn.blur();
+    }, true);
   }
   function updateQtyGroupLayout(){
     document.querySelectorAll('.collection-qty-group').forEach(function(group){
@@ -289,18 +309,26 @@
     });
   }
   var qtyLayoutListenerBound = false;
+  var qtyGroupObserver;
   function watchQtyGroupLayout(){
     updateQtyGroupLayout();
     if(qtyLayoutListenerBound) return;
     qtyLayoutListenerBound = true;
     window.addEventListener('resize', updateQtyGroupLayout);
+    qtyGroupObserver = new MutationObserver(function(){
+      updateQtyGroupLayout();
+      setupDoubleQtyButtons();
+      attachQtyInputListeners();
+    });
+    qtyGroupObserver.observe(document.body,{childList:true,subtree:true});
   }
   function initAll(){
     applyMinQty();
-    initDoubleQtyButtons();
+    setupDoubleQtyButtons();
     attachQtyInputListeners();
     attachQtyButtonListeners();
     attachNoHighlightListeners();
+    attachDoubleQtyClickListener();
     watchQtyGroupLayout();
   }
   document.addEventListener('DOMContentLoaded', initAll);
