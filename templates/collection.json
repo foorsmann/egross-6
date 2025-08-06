@@ -108,7 +108,7 @@
         "pagination_limit": 50,
         "paginate_type": "infinite",
         "show_sorting": true,
-        "show_filter": true,
+        "show_filter": false,
         "filters_type": "tags_filter",
         "sidebar": "fixed",
         "sidebar_title": "Filtre",
