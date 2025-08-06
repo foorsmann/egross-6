@@ -79,21 +79,6 @@
               %}
             </div>
           </div>
-          <div class="flex md:justify-center mt-3 flex-wrap" data-popular-searches>
-              <span class="text-[#666] mr-4">{{ 'general.search.popular_searches' | t }}:</span>
-              <div class="flex items-center flex-wrap">
-                {%- assign popular_queries = settings.popular_search_queries | split: ',' -%}
-                {% for qr in popular_queries %}
-                  <a
-                      class="cursor-pointer underline mr-4 hover:text-gray-800 whitespace-nowrap"
-                      data-ps-query="{{ qr | strip }}"
-                      data-ps-item
-                  >
-                    {{ qr | strip }}
-                  </a>
-                {% endfor %}
-              </div>
-          </div>
           <div class="hidden" data-result>
               <div class="text-2xl text-[#999] mt-4 md:mt-9 mb-2 md:mb-7 text-center">
                   <span

@@ -2442,14 +2442,6 @@
         "content": "The default fields searched on are 'title', 'product_type', 'variants.title', and 'vendor'. For the best search experience, you should search on the default field set, or as few fields as possible."
       },
       {
-        "type": "textarea",
-        "id": "popular_search_queries",
-        "label": "Popular searches",
-        "default": "T-Shirt, Blue, Jacket",
-        "info": "Separate by \",\"",
-        "placeholder": "Vintage, T-Shirt, Blue, Jacket"
-      },
-      {
         "type": "select",
         "id": "search_unavailable_products",
         "label": "Results for unavailable products",
