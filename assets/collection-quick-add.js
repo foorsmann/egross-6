@@ -118,26 +118,28 @@
     });
   }
   window.collectionApplyCappedQtyState = applyCappedQtyState;
+  var qtyInputDelegated = false;
+  function handleQtyInputEvents(e){
+    var input = e.target.closest('input[data-collection-quantity-input]');
+    if(!input) return;
+    validateAndHighlight(input);
+    updateQtyButtonsState(input);
+    syncOtherQtyInputs(input);
+    updateDoubleQtyButtonState(input);
+  }
   function attachQtyInputListeners(){
+    if(qtyInputDelegated) return;
+    qtyInputDelegated = true;
+    document.addEventListener('input', handleQtyInputEvents, true);
+    document.addEventListener('change', handleQtyInputEvents, true);
+    document.addEventListener('blur', handleQtyInputEvents, true);
+    document.addEventListener('keypress', function(e){
+      if(e.key === 'Enter') handleQtyInputEvents(e);
+    }, true);
     document.querySelectorAll('input[data-collection-quantity-input]').forEach(function(input){
-      if(input.dataset.collectionQtyListener) return;
-      input.dataset.collectionQtyListener = '1';
-      ['input','change','blur'].forEach(function(ev){
-        input.addEventListener(ev, function(){
-          validateAndHighlight(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        });
-      });
-      input.addEventListener('keypress', function(e){
-        if(e.key === 'Enter'){
-          validateAndHighlight(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        }
-      });
       validateAndHighlight(input);
       updateQtyButtonsState(input);
+      updateDoubleQtyButtonState(input);
     });
   }
   function adjustQuantity(input, delta, baseVal){
@@ -231,6 +233,57 @@
     }
     return null;
   }
+  function getDoubleQtyButtonsForInput(input){
+    var pid = input.getAttribute('data-collection-product-id');
+    var group = input.closest('.collection-qty-group');
+    var btns = group ? group.querySelectorAll('.collection-double-qty-btn') : [];
+    if(btns.length === 0 && pid){
+      btns = document.querySelectorAll('.collection-double-qty-btn[data-collection-product-id="'+pid+'"]');
+    }
+    return Array.from(btns);
+  }
+  function updateDoubleQtyButtonState(input){
+    var max = input.max ? parseInt(input.max,10) : Infinity;
+    var val = parseInt(input.value,10) || 0;
+    getDoubleQtyButtonsForInput(input).forEach(function(btn){
+      btn.disabled = val >= max;
+    });
+  }
+  var collectionDoubleQtyBound = false;
+  function attachCollectionDoubleQtyHandler(){
+    if(collectionDoubleQtyBound) return;
+    collectionDoubleQtyBound = true;
+    var root = document.querySelector('.sf-collection-list') || document;
+    root.addEventListener('click', function(e){
+      var btn = e.target.closest('.collection-double-qty-btn');
+      if(!btn) return;
+      e.preventDefault();
+      var input = findQtyInput(btn);
+      if(!input) return;
+      var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max,10) : Infinity;
+      var current = parseInt(input.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlight(input);
+      updateQtyButtonsState(input);
+      updateDoubleQtyButtonState(input);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      clearTextSelection();
+      btn.blur();
+    }, true);
+    document.addEventListener('focus', function(e){
+      var b = e.target.closest('.collection-double-qty-btn');
+      if(b) b.classList.add('focus');
+    }, true);
+    document.addEventListener('blur', function(e){
+      var b = e.target.closest('.collection-double-qty-btn');
+      if(b) b.classList.remove('focus');
+    }, true);
+  }
   function initDoubleQtyButtons(){
     document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
       var input = findQtyInput(btn);
@@ -247,37 +300,7 @@
       var label = template.replace('{min_qty}', min);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
-      if(btn.dataset.collectionDoubleQtyActive) return;
-      btn.dataset.collectionDoubleQtyActive = '1';
-      function updateBtnState(){
-        var max = input.max ? parseInt(input.max,10) : 9999;
-        var val = parseInt(input.value,10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max,10) : Infinity;
-        var current = parseInt(input.value,10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input',{bubbles:true}));
-        input.dispatchEvent(new Event('change',{bubbles:true}));
-        updateBtnState();
-        clearTextSelection();
-        btn.blur();
-      });
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
+      updateDoubleQtyButtonState(input);
     });
   }
   function updateQtyGroupLayout(){
@@ -289,11 +312,19 @@
     });
   }
   var qtyLayoutListenerBound = false;
+  var qtyLayoutObserver;
   function watchQtyGroupLayout(){
     updateQtyGroupLayout();
     if(qtyLayoutListenerBound) return;
     qtyLayoutListenerBound = true;
     window.addEventListener('resize', updateQtyGroupLayout);
+    var container = document.querySelector('.sf-collection-list') || document.body;
+    qtyLayoutObserver = new MutationObserver(function(){
+      applyMinQty();
+      initDoubleQtyButtons();
+      updateQtyGroupLayout();
+    });
+    qtyLayoutObserver.observe(container,{childList:true,subtree:true});
   }
   function initAll(){
     applyMinQty();
@@ -301,6 +332,7 @@
     attachQtyInputListeners();
     attachQtyButtonListeners();
     attachNoHighlightListeners();
+    attachCollectionDoubleQtyHandler();
     watchQtyGroupLayout();
   }
   document.addEventListener('DOMContentLoaded', initAll);

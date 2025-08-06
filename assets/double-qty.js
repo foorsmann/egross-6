@@ -269,7 +269,7 @@ var BUTTON_CLASS = 'double-qty-btn';
 
   function initDoubleQtyButtons() {
     document.querySelectorAll('.' + BUTTON_CLASS).forEach(function(btn){
-      if (btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
+      if (btn.hasAttribute('data-collection-double-qty')) return;
       var input = findQtyInput(btn);
       if (!input) return;
       var storedMin = parseInt(btn.getAttribute('data-original-min-qty'), 10);
