@@ -98,6 +98,7 @@ var BUTTON_CLASS = 'double-qty-btn';
         input.value = value;
         validateAndHighlightQty(input);
         updateQtyButtonsState(input);
+        updateDoubleQtyBtnState(input);
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
       }
@@ -121,11 +122,13 @@ var BUTTON_CLASS = 'double-qty-btn';
       input.style.color = '#e3342f';
       if(typeof updateQtyButtonsState === 'function'){
         updateQtyButtonsState(input);
+        updateDoubleQtyBtnState(input);
       }
       setTimeout(function(){
         input.value = 0;
         if(typeof updateQtyButtonsState === 'function'){
           updateQtyButtonsState(input);
+          updateDoubleQtyBtnState(input);
         }
       },0);
       var clearWarning = function(){
@@ -144,6 +147,7 @@ var BUTTON_CLASS = 'double-qty-btn';
         if(typeof window.syncOtherQtyInputs === 'function'){
           window.syncOtherQtyInputs(input);
         }
+        updateDoubleQtyBtnState(input);
       };
       input.addEventListener('input', clearWarning, { once: true });
       input.addEventListener('change', clearWarning, { once: true });
@@ -162,6 +166,7 @@ var BUTTON_CLASS = 'double-qty-btn';
         input.addEventListener(ev, function(){
           validateAndHighlightQty(input);
           updateQtyButtonsState(input);
+          updateDoubleQtyBtnState(input);
           syncOtherQtyInputs(input);
         });
       });
@@ -169,11 +174,13 @@ var BUTTON_CLASS = 'double-qty-btn';
         if(e.key === 'Enter'){
           validateAndHighlightQty(input);
           updateQtyButtonsState(input);
+          updateDoubleQtyBtnState(input);
           syncOtherQtyInputs(input);
         }
       });
       validateAndHighlightQty(input);
       updateQtyButtonsState(input);
+      updateDoubleQtyBtnState(input);
       syncOtherQtyInputs(input);
     });
   }
@@ -256,20 +263,45 @@ var BUTTON_CLASS = 'double-qty-btn';
   }
 
   function findQtyInput(btn) {
-    let wrapper = btn.previousElementSibling;
-    if (wrapper && wrapper.classList && wrapper.classList.contains('quantity-input')) {
-      let input = wrapper.querySelector('input[type="number"]');
-      if (input) return input;
+    var group = btn.closest('.quantity-input, .quantity-input-wrapper, .product-form__quantity');
+    if(group){
+      var input = group.querySelector('input[type="number"][data-quantity-input]');
+      if(input) return input;
     }
-    if (btn.previousElementSibling && btn.previousElementSibling.tagName === 'INPUT') {
-      return btn.previousElementSibling;
+    var pid = btn.getAttribute('data-product-id');
+    if(pid){
+      return document.querySelector('input[data-product-id="'+pid+'"][data-quantity-input]');
     }
-    return btn.parentNode.querySelector('input[type="number"]');
+    var form = btn.closest('form');
+    if(form){
+      var inp = form.querySelector('input[type="number"][data-quantity-input]');
+      if(inp) return inp;
+    }
+    return null;
   }
-
-  function initDoubleQtyButtons() {
+  function findDoubleQtyBtn(input){
+    var group = input.closest('.quantity-input, .quantity-input-wrapper, .product-form__quantity');
+    if(group){
+      var btn = group.querySelector('.double-qty-btn:not(.collection-double-qty-btn)');
+      if(btn) return btn;
+    }
+    var pid = input.getAttribute('data-product-id');
+    if(pid){
+      return document.querySelector('.double-qty-btn[data-product-id="'+pid+'"]:not(.collection-double-qty-btn)');
+    }
+    return null;
+  }
+  function updateDoubleQtyBtnState(input){
+    var btn = findDoubleQtyBtn(input);
+    if(!btn) return;
+    var max = input.max ? parseInt(input.max,10) : 9999;
+    var val = parseInt(input.value,10) || 1;
+    btn.disabled = val >= max;
+  }
+  function setupDoubleQtyButtons() {
     document.querySelectorAll('.' + BUTTON_CLASS).forEach(function(btn){
       if (btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
+      if(btn.dataset.doubleQtyInit) return;
       var input = findQtyInput(btn);
       if (!input) return;
       var storedMin = parseInt(btn.getAttribute('data-original-min-qty'), 10);
@@ -284,54 +316,48 @@ var BUTTON_CLASS = 'double-qty-btn';
       var label = template.replace('{min_qty}', min);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
-
-      if (btn.dataset.doubleQtyActive) return;
-      btn.dataset.doubleQtyActive = '1';
-
-      function updateBtnState() {
-        var max = input.max ? parseInt(input.max, 10) : 9999;
-        var val = parseInt(input.value, 10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max, 10) : Infinity;
-        var current = parseInt(input.value, 10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        updateBtnState();
-      });
-
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
+      btn.dataset.doubleQtyInit = '1';
+      updateDoubleQtyBtnState(input);
     });
+  }
+  var doubleQtyClickListenerBound = false;
+  function attachDoubleQtyClickListener(){
+    if(doubleQtyClickListenerBound) return;
+    doubleQtyClickListenerBound = true;
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.double-qty-btn');
+      if(!btn || btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
+      var input = findQtyInput(btn);
+      if(!input) return;
+      e.preventDefault();
+      var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max, 10) : Infinity;
+      var current = parseInt(input.value, 10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlightQty(input);
+      updateQtyButtonsState(input);
+      updateDoubleQtyBtnState(input);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, true);
   }
 
   function initAll(){
     applyMinQty();
-    initDoubleQtyButtons();
+    setupDoubleQtyButtons();
     attachQtyInputListeners();
     attachQtyButtonListeners();
+    attachDoubleQtyClickListener();
   }
   document.addEventListener('DOMContentLoaded', initAll);
   window.addEventListener('shopify:section:load', initAll);
   window.addEventListener('shopify:cart:updated', initAll);
   window.addEventListener('shopify:product:updated', initAll);
 
-  window.doubleQtyInit = initDoubleQtyButtons;
+  window.doubleQtyInit = setupDoubleQtyButtons;
 })();
 
 
