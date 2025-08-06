@@ -153,30 +153,24 @@ var BUTTON_CLASS = 'double-qty-btn';
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
 
-  function attachQtyInputListeners(){
-    var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
-    document.querySelectorAll(selectors).forEach(function(input){
-      if(input.dataset.qtyListener) return;
-      input.dataset.qtyListener = '1';
-      ['input','change','blur'].forEach(function(ev){
-        input.addEventListener(ev, function(){
-          validateAndHighlightQty(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        });
-      });
-      input.addEventListener('keypress', function(e){
-        if(e.key === 'Enter'){
-          validateAndHighlightQty(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        }
-      });
+    function handleQtyInputEvent(e){
+      var input = e.target.closest('.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]');
+      if(!input) return;
       validateAndHighlightQty(input);
       updateQtyButtonsState(input);
       syncOtherQtyInputs(input);
-    });
-  }
+      updateDoubleQtyState(input);
+    }
+
+    function handleQtyKeypress(e){
+      if(e.key !== 'Enter') return;
+      var input = e.target.closest('.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]');
+      if(!input) return;
+      validateAndHighlightQty(input);
+      updateQtyButtonsState(input);
+      syncOtherQtyInputs(input);
+      updateDoubleQtyState(input);
+    }
 
   // Nu validăm logică pentru cart/drawer (lăsăm tema să o gestioneze separat!)
   var qtyBtnListenerAdded = false;
@@ -255,84 +249,99 @@ var BUTTON_CLASS = 'double-qty-btn';
     updateQtyButtonsState(input);
   }
 
-  function findQtyInput(btn) {
-    let wrapper = btn.previousElementSibling;
-    if (wrapper && wrapper.classList && wrapper.classList.contains('quantity-input')) {
-      let input = wrapper.querySelector('input[type="number"]');
-      if (input) return input;
+    function findQtyInput(btn){
+      var container = btn.closest('.quantity-input');
+      if(container){
+        var input = container.querySelector('input[type="number"]');
+        if(input) return input;
+      }
+      var pid = btn.getAttribute('data-product-id');
+      if(pid){
+        return document.querySelector('input[data-product-id="'+pid+'"][data-quantity-input]');
+      }
+      return null;
     }
-    if (btn.previousElementSibling && btn.previousElementSibling.tagName === 'INPUT') {
-      return btn.previousElementSibling;
-    }
-    return btn.parentNode.querySelector('input[type="number"]');
-  }
 
-  function initDoubleQtyButtons() {
-    document.querySelectorAll('.' + BUTTON_CLASS).forEach(function(btn){
+    function setupDoubleQtyButton(btn){
       if (btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
       var input = findQtyInput(btn);
-      if (!input) return;
+      if(!input) return;
       var storedMin = parseInt(btn.getAttribute('data-original-min-qty'), 10);
-      var min;
+      var min = isNaN(storedMin) ? (parseInt(input.getAttribute('data-min-qty'), 10) || 1) : storedMin;
       if(isNaN(storedMin)){
-        min = parseInt(input.getAttribute('data-min-qty'), 10) || 1;
         btn.setAttribute('data-original-min-qty', min);
-      }else{
-        min = storedMin;
       }
       var template = btn.getAttribute('data-label-template') || btn.textContent;
       var label = template.replace('{min_qty}', min);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
+      var max = input.max ? parseInt(input.max, 10) : 9999;
+      var val = parseInt(input.value, 10) || 1;
+      btn.disabled = val >= max;
+    }
 
-      if (btn.dataset.doubleQtyActive) return;
-      btn.dataset.doubleQtyActive = '1';
+    function setupDoubleQtyButtons(){
+      document.querySelectorAll('.' + BUTTON_CLASS).forEach(setupDoubleQtyButton);
+    }
 
-      function updateBtnState() {
-        var max = input.max ? parseInt(input.max, 10) : 9999;
-        var val = parseInt(input.value, 10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max, 10) : Infinity;
-        var current = parseInt(input.value, 10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlightQty(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        updateBtnState();
+    function updateDoubleQtyState(input){
+      var pid = input.dataset.productId;
+      if(!pid) return;
+      document.querySelectorAll('.' + BUTTON_CLASS + '[data-product-id="'+pid+'"]').forEach(function(btn){
+        setupDoubleQtyButton(btn);
       });
+    }
 
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
-    });
-  }
+    function handleDoubleQtyClick(e){
+      var btn = e.target.closest('.' + BUTTON_CLASS);
+      if(!btn || btn.hasAttribute('data-collection-double-qty') || btn.classList.contains('collection-double-qty-btn')) return;
+      e.preventDefault();
+      var input = findQtyInput(btn);
+      if(!input) return;
+      var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max, 10) : Infinity;
+      var current = parseInt(input.value, 10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlightQty(input);
+      updateQtyButtonsState(input);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      updateDoubleQtyState(input);
+    }
 
-  function initAll(){
-    applyMinQty();
-    initDoubleQtyButtons();
-    attachQtyInputListeners();
-    attachQtyButtonListeners();
-  }
-  document.addEventListener('DOMContentLoaded', initAll);
-  window.addEventListener('shopify:section:load', initAll);
-  window.addEventListener('shopify:cart:updated', initAll);
-  window.addEventListener('shopify:product:updated', initAll);
+    function handleDoubleQtyFocus(e){
+      var btn = e.target.closest('.' + BUTTON_CLASS);
+      if(btn) btn.classList.add('focus');
+    }
 
-  window.doubleQtyInit = initDoubleQtyButtons;
-})();
+    function handleDoubleQtyBlur(e){
+      var btn = e.target.closest('.' + BUTTON_CLASS);
+      if(btn) btn.classList.remove('focus');
+    }
+
+    document.addEventListener('input', handleQtyInputEvent, true);
+    document.addEventListener('change', handleQtyInputEvent, true);
+    document.addEventListener('blur', handleQtyInputEvent, true);
+    document.addEventListener('keypress', handleQtyKeypress, true);
+    document.addEventListener('click', handleDoubleQtyClick, true);
+    document.addEventListener('focus', handleDoubleQtyFocus, true);
+    document.addEventListener('blur', handleDoubleQtyBlur, true);
+
+    function initAll(){
+      applyMinQty();
+      setupDoubleQtyButtons();
+      attachQtyButtonListeners();
+    }
+    document.addEventListener('DOMContentLoaded', initAll);
+    window.addEventListener('shopify:section:load', initAll);
+    window.addEventListener('shopify:cart:updated', initAll);
+    window.addEventListener('shopify:product:updated', initAll);
+
+    window.doubleQtyInit = setupDoubleQtyButtons;
+  })();
 
 
 
