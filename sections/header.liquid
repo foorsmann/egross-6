@@ -380,11 +380,12 @@
                 {% when 'logo-left__2l' %}
                     <div class="{{ container }} sf__header-main-top">
                         <div class="flex sf-menu-logo-bar -mx-4 items-center py-2">
-                            {% render 'header-logo', header_settings: section.settings, box_size: 'w-1/3', box_size: 'justify-start' %}
-                            <div class="w-2/3 flex flex-grow justify-end items-center">
+                            {% render 'header-logo', header_settings: section.settings, box_size: 'w-1/3', justify: 'justify-start' %}
+                            <div class="w-1/3 px-4">
+                                {% render 'header-option-item__search', header_settings: section.settings, box_size: 'w-full' %}
+                            </div>
+                            <div class="w-1/3 px-4 flex justify-end items-center">
                                 {% liquid
-                                  render 'header-option-item__search', header_settings: section.settings
-
                                   if show_language_switcher
                                     render 'language-switcher', box_size: 'hidden xl:block'
                                   endif
