@@ -213,13 +213,14 @@
     if(noHighlightListenerBound) return;
     noHighlightListenerBound = true;
     document.addEventListener('click', function(e){
-      var btn = e.target.closest('.collection-add-to-cart, .collection-double-qty-btn, .collection-qty-button, .sf__btn');
+      var btn = e.target.closest('.collection-add-to-cart, [data-collection-double-qty], .collection-qty-button, .sf__btn');
       if(!btn || !btn.closest('.sf__pcard-quick-add-col')) return;
       clearTextSelection();
       btn.blur();
     }, true);
   }
   function findInputForBtn(btn){
+    if(!btn || !btn.hasAttribute('data-collection-double-qty')) return null;
     var group = btn.closest('.collection-qty-group');
     if(group){
       var inp = group.querySelector('input[data-collection-quantity-input]');
@@ -232,26 +233,28 @@
     return null;
   }
   function findBtnForInput(input){
+    if(!input || !input.hasAttribute('data-collection-quantity-input')) return null;
     var group = input.closest('.collection-qty-group');
     if(group){
-      var btn = group.querySelector('.collection-double-qty-btn');
+      var btn = group.querySelector('[data-collection-double-qty]');
       if(btn) return btn;
     }
     var pid = input.getAttribute('data-collection-product-id');
     if(pid){
-      return document.querySelector('.collection-double-qty-btn[data-collection-product-id="'+pid+'"]');
+      return document.querySelector('[data-collection-double-qty][data-collection-product-id="'+pid+'"]');
     }
     return null;
   }
   function updateDoubleQtyBtnState(btn, input){
+    if(!btn || !btn.hasAttribute('data-collection-double-qty')) return;
     input = input || findInputForBtn(btn);
-    if(!btn || !input) return;
+    if(!input) return;
     var max = input.max ? parseInt(input.max,10) : 9999;
     var val = parseInt(input.value,10) || 1;
     btn.disabled = val >= max;
   }
   function initDoubleQtyButtons(){
-    document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
+    document.querySelectorAll('[data-collection-double-qty]').forEach(function(btn){
       var input = findInputForBtn(btn);
       if(!input) return;
       if(!btn.hasAttribute('data-collection-original-min-qty')){
@@ -271,7 +274,7 @@
     if(doubleQtyDelegatesBound) return;
     doubleQtyDelegatesBound = true;
     document.addEventListener('click', function(e){
-      var btn = e.target.closest('.collection-double-qty-btn');
+      var btn = e.target.closest('[data-collection-double-qty]');
       if(!btn) return;
       var input = findInputForBtn(btn);
       if(!input) return;
@@ -292,18 +295,18 @@
       btn.blur();
     }, true);
     document.addEventListener('focusin', function(e){
-      var btn = e.target.closest('.collection-double-qty-btn');
+      var btn = e.target.closest('[data-collection-double-qty]');
       if(btn) btn.classList.add('focus');
     });
     document.addEventListener('focusout', function(e){
-      var btn = e.target.closest('.collection-double-qty-btn');
+      var btn = e.target.closest('[data-collection-double-qty]');
       if(btn) btn.classList.remove('focus');
     });
   }
   function updateQtyGroupLayout(){
     document.querySelectorAll('.collection-qty-group').forEach(function(group){
       var input = group.querySelector('input[data-collection-quantity-input]');
-      var btn = group.querySelector('.collection-double-qty-btn');
+      var btn = group.querySelector('[data-collection-double-qty]');
       if(!input || !btn) return;
       group.classList.toggle('is-wrapped', btn.offsetTop > input.offsetTop);
     });
