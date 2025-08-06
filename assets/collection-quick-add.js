@@ -317,7 +317,7 @@
     if(qtyLayoutListenerBound) return;
     qtyLayoutListenerBound = true;
     window.addEventListener('resize', updateQtyGroupLayout);
-    document.querySelectorAll('.sf-collection-list, .collection-listing').forEach(function(container){
+    document.querySelectorAll('.sf-collection-list, .collection-listing, .swiper-container, .swiper-wrapper').forEach(function(container){
       new MutationObserver(function(){
         applyMinQty();
         initDoubleQtyButtons();
@@ -363,7 +363,9 @@
         return;
       }
       const qtyInput = this.form.querySelector('input[name="quantity"]');
-      const requestedQty = parseInt(formData.get('quantity')) || 1;
+      let requestedQty = parseInt(qtyInput && qtyInput.value,10);
+      if(!requestedQty || isNaN(requestedQty)) requestedQty = 1;
+      formData.set('quantity', requestedQty);
       const maxQty = parseInt(qtyInput?.max) || Infinity;
       let cartQty = 0;
       try{
