@@ -42,7 +42,7 @@
                   </button>
                 </collection-quantity-input>
                 {%- if min_qty > 0 and max_qty > 0 or request.design_mode -%}
-                  <button type="button" class="collection-double-qty-btn double-qty-btn sf__btn sf__btn-secondary flex-1 max-w-[160px] h-[46px]" aria-label="{{ double_label }}" data-collection-double-qty data-collection-label-template="{{ label_template }}" data-collection-original-min-qty="{{ min_qty }}">{{ double_label }}</button>
+                  <button type="button" class="collection-double-qty-btn double-qty-btn sf__btn sf__btn-secondary flex-1 max-w-[160px] h-[46px]" aria-label="{{ double_label }}" data-collection-double-qty data-collection-label-template="{{ label_template }}" data-collection-original-min-qty="{{ min_qty }}" data-collection-product-id="{{ product.id }}">{{ double_label }}</button>
                 {%- endif -%}
               </div>
             </div>

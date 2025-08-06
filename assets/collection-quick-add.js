@@ -220,15 +220,16 @@
     }, true);
   }
   function findQtyInput(btn){
-    var wrap = btn.previousElementSibling;
-    if(wrap && wrap.classList && wrap.classList.contains('collection-quantity-input')){
-      var inp = wrap.querySelector('input[type="number"]');
+    var group = btn.closest('.collection-qty-group');
+    if(group){
+      var inp = group.querySelector('input[data-collection-quantity-input]');
       if(inp) return inp;
     }
-    if(btn.previousElementSibling && btn.previousElementSibling.tagName === 'INPUT'){
-      return btn.previousElementSibling;
+    var pid = btn.getAttribute('data-collection-product-id');
+    if(pid){
+      return document.querySelector('input[data-collection-product-id="'+pid+'"][data-collection-quantity-input]');
     }
-    return btn.parentNode.querySelector('input[type="number"]');
+    return null;
   }
   function initDoubleQtyButtons(){
     document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
@@ -281,7 +282,7 @@
   }
   function updateQtyGroupLayout(){
     document.querySelectorAll('.collection-qty-group').forEach(function(group){
-      var input = group.querySelector('.collection-quantity-input');
+      var input = group.querySelector('input[data-collection-quantity-input]');
       var btn = group.querySelector('.collection-double-qty-btn');
       if(!input || !btn) return;
       group.classList.toggle('is-wrapped', btn.offsetTop > input.offsetTop);
