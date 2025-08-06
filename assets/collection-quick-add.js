@@ -220,25 +220,32 @@
     }, true);
   }
   function findQtyInput(btn){
-    var group = btn.closest('.collection-qty-group');
-    if(group){
-      var inp = group.querySelector('input[data-collection-quantity-input]');
-      if(inp) return inp;
-    }
     var pid = btn.getAttribute('data-collection-product-id');
-    if(pid){
-      return document.querySelector('input[data-collection-product-id="'+pid+'"][data-collection-quantity-input]');
-    }
-    return null;
+    if(!pid) return null;
+    // try to locate an ancestor container sharing the same product id
+    var container = btn.parentElement ? btn.parentElement.closest('[data-collection-product-id="'+pid+'"]') : null;
+    var input = container ? container.querySelector('input[data-collection-product-id="'+pid+'"][data-collection-quantity-input]') : null;
+    if(input) return input;
+    // fallback to the first matching input anywhere in the DOM
+    return document.querySelector('input[data-collection-product-id="'+pid+'"][data-collection-quantity-input]');
+  }
+  function updateDoubleQtyBtn(btn){
+    var input = findQtyInput(btn);
+    if(!input){ btn.disabled = true; return; }
+    var max = input.max ? parseInt(input.max,10) : 9999;
+    var val = parseInt(input.value,10) || 1;
+    btn.disabled = val >= max;
+    validateAndHighlight(input);
+    updateQtyButtonsState(input);
   }
   function initDoubleQtyButtons(){
     document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
+      if(btn.dataset.collectionDoubleQtyActive) return;
       var input = findQtyInput(btn);
-      if(!input) return;
       var storedMin = parseInt(btn.getAttribute('data-collection-original-min-qty'),10);
       var min;
       if(isNaN(storedMin)){
-        min = parseInt(input.getAttribute('data-collection-min-qty'),10) || 1;
+        min = input ? (parseInt(input.getAttribute('data-collection-min-qty'),10) || 1) : 1;
         btn.setAttribute('data-collection-original-min-qty', min);
       }else{
         min = storedMin;
@@ -247,38 +254,41 @@
       var label = template.replace('{min_qty}', min);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
-      if(btn.dataset.collectionDoubleQtyActive) return;
       btn.dataset.collectionDoubleQtyActive = '1';
-      function updateBtnState(){
-        var max = input.max ? parseInt(input.max,10) : 9999;
-        var val = parseInt(input.value,10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
+      updateDoubleQtyBtn(btn);
+      if(input){
+        input.addEventListener('input', function(){ updateDoubleQtyBtn(btn); });
+        input.addEventListener('change', function(){ updateDoubleQtyBtn(btn); });
       }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max,10) : Infinity;
-        var current = parseInt(input.value,10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input',{bubbles:true}));
-        input.dispatchEvent(new Event('change',{bubbles:true}));
-        updateBtnState();
-        clearTextSelection();
-        btn.blur();
-      });
       btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
       btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
     });
+  }
+  var doubleQtyClickListenerBound = false;
+  function attachDoubleQtyClickListener(){
+    if(doubleQtyClickListenerBound) return;
+    doubleQtyClickListenerBound = true;
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.collection-double-qty-btn');
+      if(!btn) return;
+      var input = findQtyInput(btn);
+      if(!input) return;
+      e.preventDefault();
+      var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max,10) : Infinity;
+      var current = parseInt(input.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlight(input);
+      updateQtyButtonsState(input);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      updateDoubleQtyBtn(btn);
+      clearTextSelection();
+      btn.blur();
+    }, true);
   }
   function updateQtyGroupLayout(){
     document.querySelectorAll('.collection-qty-group').forEach(function(group){
@@ -300,6 +310,7 @@
     initDoubleQtyButtons();
     attachQtyInputListeners();
     attachQtyButtonListeners();
+    attachDoubleQtyClickListener();
     attachNoHighlightListeners();
     watchQtyGroupLayout();
   }
