@@ -14,7 +14,7 @@
     "double_qty_btn_label": "Adauga inca {min_qty}",
     "container_width": 1200,
     "container_fluid_width": 1280,
-    "container_fluid_offset": 150,
+    "container_fluid_offset": 65,
     "spacing_sections": 100,
     "color_primary": "#000000",
     "color_main_bg": "#ffffff",
