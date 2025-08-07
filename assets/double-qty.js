@@ -153,6 +153,42 @@ var BUTTON_CLASS = 'double-qty-btn';
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
 
+  async function checkCartLimits(){
+    try{
+      const cart = await fetch('/cart.js').then(r => r.json());
+      const items = cart.items || [];
+      document.querySelectorAll('input[data-quantity-input], input[data-collection-quantity-input]').forEach(function(input){
+        if(input.closest('.scd-item') || input.closest('[data-cart-item]')) return;
+        const max = parseInt(input.max,10);
+        if(!max || !isFinite(max)) return;
+        let variantId = null;
+        if(input.dataset.variantId){
+          variantId = parseInt(input.dataset.variantId,10);
+        }
+        if(!variantId){
+          const form = input.closest('form');
+          if(form){
+            const varInput = form.querySelector('input[name="id"]');
+            if(varInput) variantId = parseInt(varInput.value,10);
+          }
+        }
+        if(!variantId) return;
+        const item = items.find(it => it.variant_id === variantId);
+        const cartQty = item ? item.quantity : 0;
+        const available = max - cartQty;
+        if(available <= 0){
+          if(input.hasAttribute('data-collection-quantity-input') && typeof window.collectionApplyCappedQtyState === 'function'){
+            window.collectionApplyCappedQtyState(input);
+          }else if(typeof window.applyCappedQtyState === 'function'){
+            window.applyCappedQtyState(input);
+          }
+        }
+      });
+    }catch(e){
+      // silently ignore errors
+    }
+  }
+
   function attachQtyInputListeners(){
     var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
     document.querySelectorAll(selectors).forEach(function(input){
@@ -330,6 +366,11 @@ var BUTTON_CLASS = 'double-qty-btn';
   window.addEventListener('shopify:section:load', initAll);
   window.addEventListener('shopify:cart:updated', initAll);
   window.addEventListener('shopify:product:updated', initAll);
+
+  document.addEventListener('DOMContentLoaded', checkCartLimits);
+  window.addEventListener('shopify:cart:updated', checkCartLimits);
+  window.addEventListener('shopify:section:load', checkCartLimits);
+  window.addEventListener('shopify:product:updated', checkCartLimits);
 
   window.doubleQtyInit = initDoubleQtyButtons;
 })();
