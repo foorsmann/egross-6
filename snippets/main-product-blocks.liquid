@@ -394,7 +394,8 @@
                       </pickup-availability-preview>
                   </template>
               </pickup-availability>
-              <script src="{{ 'pickup-availability.min.js' | asset_url }}" defer="defer"></script>
+              <!-- store pickup availability -->
+              <script src="{{ 'pickup-availability.js' | asset_url }}" defer="defer"></script>
 
             {%- when 'collapsible_tab' -%}
               {% if block.settings.heading != blank %}

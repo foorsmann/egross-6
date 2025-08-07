@@ -21,7 +21,8 @@
   endif
 %}
 
-<script src="{{ 'tags-filters.min.js' | asset_url }}" defer="defer"></script>
+<!-- tag filter logic -->
+<script src="{{ 'tags-filters.js' | asset_url }}" defer="defer"></script>
 <collection-tags-filters>
 {% for block in section.blocks %}
   {% case block.type %}

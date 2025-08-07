@@ -1,7 +1,8 @@
 {%- assign st = section.settings -%}
 {%- assign total_active_values = 0 -%}
 
-<script src="{{ '2.0-filters.min.js' | asset_url }}" defer="defer"></script>
+<!-- storefront filtering logic -->
+<script src="{{ '2.0-filters.js' | asset_url }}" defer="defer"></script>
 <collection-filters-form>
   <form id="CollectionFiltersForm">
     {%- if results.terms -%}

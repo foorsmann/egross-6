@@ -47,8 +47,8 @@ template-{{ template.name | handle }} {{ template.name }}-{{ template.suffix }} 
   {% render 'style-tags' %}
 
   <script src="{{ 'theme-global.js' | asset_url }}" defer="defer"></script>
-  <script src="{{ 'product-form.min.js' | asset_url }}" defer="defer"></script>
-  <script src="{{ 'lazy-image.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'lazy-image.js' | asset_url }}" defer="defer"></script>
 
   {{ content_for_header }}
 
@@ -62,7 +62,8 @@ template-{{ template.name | handle }} {{ template.name }}-{{ template.suffix }} 
   <link href="{{ 'double-qty.css' | asset_url }}" rel="stylesheet" type="text/css" />
 
   <!-- Buton Dublează cantitate -->
-  <script src="{{ 'double-qty.js' | asset_url }}" defer="defer"></script>
+  <!-- Centralized quantity helper -->
+  <script src="{{ 'quantity.js' | asset_url }}" defer="defer"></script>
 
   <!-- Componente quick add colecție -->
   <link href="{{ 'collection-quick-add.css' | asset_url }}" rel="stylesheet" type="text/css" />
@@ -95,10 +96,11 @@ template-{{ template.name | handle }} {{ template.name }}-{{ template.suffix }} 
   {% render 'script-tags' %}
 
   <script src="{{ 'app.js' | asset_url }}" defer="defer"></script>
-  <script src="{{ 'foxkit-app.min.js' | asset_url }}" defer="defer"></script>
+  <!-- use original JS sources for easier debugging -->
+  <script src="{{ 'foxkit-app.js' | asset_url }}" defer="defer"></script>
 
-  <script src="{{ 'quick-view.min.js' | asset_url }}" defer="defer"></script>
-  <script src="{{ 'product-card-swatch.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'quick-view.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-card-swatch.js' | asset_url }}" defer="defer"></script>
 
 
  {% render "reviews-importer-popup" %}

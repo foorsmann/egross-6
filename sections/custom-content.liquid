@@ -294,7 +294,8 @@
                                         {% endunless %}
                                     </div>
                                     {% if product.options_with_values.size > 0 %}
-                                      <script src="{{ 'variant-picker.min.js' | asset_url }}" defer="defer"></script>
+                                      <!-- shared variant picker source -->
+                                      <script src="{{ 'variant-picker.js' | asset_url }}" defer="defer"></script>
                                     {% endif %}
                                 </div>
 

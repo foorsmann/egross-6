@@ -66,10 +66,11 @@ window.ConceptSGMStrings = {
 
 window.FoxKitStrings = {{ shop.metafields.foxecom-bs-kit.locale.value | json }};
 
+// URLs for core theme scripts (unminified)
 window.ConceptSGMThemeScripts = {
-  productModel: "{{ 'product-model-new.min.js' | asset_url | prepend: 'https:' }}",
-  productMedia: "{{ 'product-media.min.js' | asset_url | prepend: 'https:' }}",
-  variantsPicker: "{{ 'variant-picker.min.js' | asset_url | prepend: 'https:' }}"
+  productModel: "{{ 'product-model-new.js' | asset_url | prepend: 'https:' }}",
+  productMedia: "{{ 'product-media.js' | asset_url | prepend: 'https:' }}",
+  variantsPicker: "{{ 'variant-picker.js' | asset_url | prepend: 'https:' }}"
 };
 
 window.ConceptSGMSettings = {
@@ -172,100 +173,101 @@ window.themeStyleURLs = {
   },
 };
 
+// Lazy-loaded script URLs
 window.themeScriptURLs = {
   productTemplate: {
-    url: "{{ 'product-template.min.js' | asset_url }}",
+    url: "{{ 'product-template.js' | asset_url }}",
     required: {% if template.name == "product" %} true {% else %} false {% endif %},
     afterWindowLoaded: true
   },
   collection: {
-    url: "{{ 'collection.min.js' | asset_url }}",
+    url: "{{ 'collection.js' | asset_url }}",
     required: {% if template.name == "collection" %} true {% else %} false {% endif %},
   },
   customer: {
-    url: "{{ 'customer.min.js' | asset_url }}",
+    url: "{{ 'customer.js' | asset_url }}",
     required: {% if template == "customers/addresses" %} true {% else %} false {% endif %},
   },
   salesNotification: {
-    url: "{{ 'sales-notifications.min.js' | asset_url }}",
+    url: "{{ 'sales-notifications.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   bundle: {
-    url: "{{ 'bundle.min.js' | asset_url }}",
+    url: "{{ 'bundle.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   luckyWheel: {
-    url: "{{ 'lucky-wheel.min.js' | asset_url }}",
+    url: "{{ 'lucky-wheel.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   prePurchase: {
-    url: "{{ 'pre-purchase.min.js' | asset_url }}",
+    url: "{{ 'pre-purchase.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   inCart: {
-    url: "{{ 'incart.min.js' | asset_url }}",
+    url: "{{ 'incart.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   cartGoal: {
-    url: "{{ 'cart-goal.min.js' | asset_url }}",
+    url: "{{ 'cart-goal.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   bis: {
-    url: "{{ 'bis.min.js' | asset_url }}",
+    url: "{{ 'bis.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   quantityDiscount: {
-    url: "{{ 'quantity-discount.min.js' | asset_url }}",
+    url: "{{ 'quantity-discount.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   popup: {
-    url: "{{ 'popup.min.js' | asset_url }}",
+    url: "{{ 'popup.js' | asset_url }}",
     required: false,
     afterWindowLoaded: false
   },
   countdown: {
-    url: "{{ 'product-countdown.min.js' | asset_url }}",
+    url: "{{ 'product-countdown.js' | asset_url }}",
     required: false,
     afterWindowLoaded: true
   },
   tabs: {
-    url: "{{ 'tabs.min.js' | asset_url }}",
+    url: "{{ 'tabs.js' | asset_url }}",
     required: false,
   },
   cookieConsent: {
-    url: "{{ 'cookie-consent.min.js' | asset_url }}",
+    url: "{{ 'cookie-consent.js' | asset_url }}",
     required: false,
     afterWindowLoaded: true
   },
   glightbox: {
-    url: "{{ 'glightbox.min.js' | asset_url }}",
+    url: "{{ 'glightbox.js' | asset_url }}",
     required: {% if template.name == "product" %} true {% else %} false {% endif %},
     afterWindowLoaded: true
   },
   mansory: {
-    url: "{{ 'mansory-layout.min.js' | asset_url }}",
+    url: "{{ 'mansory-layout.js' | asset_url }}",
     required: false,
     afterWindowLoaded: true
   },
   plyr: {
-    url: "{{ 'plyr.min.js' | asset_url }}",
+    url: "{{ 'plyr.js' | asset_url }}",
     required: false,
     afterWindowLoaded: true
   },
   swiper: {
-    url: "{{ 'swiper.min.js' | asset_url }}",
+    url: "{{ 'swiper.js' | asset_url }}",
     required: {% if template.name == "product" %} true {% else %} false {% endif %},
   },
   parallax: {
-    url: "{{ 'simple-parallax.min.js' | asset_url }}",
+    url: "{{ 'simple-parallax.js' | asset_url }}",
     required: false,
     afterWindowLoaded: true
   }

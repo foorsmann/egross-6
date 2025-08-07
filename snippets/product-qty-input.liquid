@@ -25,6 +25,7 @@
         data-quantity-input
         data-min-qty="{{ product.metafields.custom.minimum_quantity | default: 1 }}"
         data-product-id="{{ product.id }}"
+        data-variant-id="{{ product.selected_or_first_available_variant.id }}"
         form="{{ product_form_id }}"
     >
     <button

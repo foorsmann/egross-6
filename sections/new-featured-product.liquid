@@ -118,16 +118,17 @@
   </div>
 </div>
 {% if product.media.size > 0 %}
-  <script src="{{ 'product-media.min.js' | asset_url }}" defer="defer"></script>
+  <!-- product media script -->
+  <script src="{{ 'product-media.js' | asset_url }}" defer="defer"></script>
 {% endif %}
 {%- if first_3d_model -%}
   <script type="application/json" id="ModelJSON-{{ product.id }}">
     {{ product.media | where: 'media_type', 'model' | json }}
   </script>
-  <script src="{{ 'product-model-new.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-model-new.js' | asset_url }}" defer="defer"></script>
 {%- endif -%}
 {% if product.options_with_values.size > 0 %}
-  <script src="{{ 'variant-picker.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'variant-picker.js' | asset_url }}" defer="defer"></script>
 {% endif %}
 
 <script type="application/ld+json">
