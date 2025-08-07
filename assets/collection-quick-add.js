@@ -257,6 +257,10 @@
       if(btn.dataset.collectionDoubleQtyActive) return;
       btn.dataset.collectionDoubleQtyActive = '1';
       function updateBtnState(){
+        if(input.disabled || input.readOnly){
+          btn.disabled = true;
+          return;
+        }
         var max = input.max ? parseInt(input.max,10) : 9999;
         var val = parseInt(input.value,10) || 1;
         btn.disabled = val >= max;
