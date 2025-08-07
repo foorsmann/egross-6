@@ -49,6 +49,11 @@
     if(!container) return;
     var plus = container.querySelector('[data-quantity-selector="increase"],[data-qty-change="inc"]');
     var minus = container.querySelector('[data-quantity-selector="decrease"],[data-qty-change="dec"]');
+    if(input.disabled || input.readOnly){
+      if(plus) plus.disabled = true;
+      if(minus) minus.disabled = true;
+      return;
+    }
 
     var max = input.max ? parseInt(input.max, 10) : Infinity;
     var step = parseInt(input.getAttribute('data-min-qty'), 10) || parseInt(input.step,10) || 1;
@@ -152,6 +157,80 @@ var BUTTON_CLASS = 'double-qty-btn';
 
   window.syncOtherQtyInputs = syncOtherQtyInputs;
   window.applyCappedQtyState = applyCappedQtyState;
+
+  async function checkCartLimits(){
+    try{
+      const cart = await fetch('/cart.js').then(r => r.json());
+      const items = cart.items || [];
+      document.querySelectorAll('input[data-quantity-input], input[data-collection-quantity-input]').forEach(function(input){
+        if(input.closest('.scd-item') || input.closest('[data-cart-item]')) return;
+        const max = parseInt(input.max,10);
+        if(!max || !isFinite(max)) return;
+        let variantId = null;
+        if(input.dataset.variantId){
+          variantId = parseInt(input.dataset.variantId,10);
+        }
+        if(!variantId){
+          const form = input.closest('form');
+          if(form){
+            const varInput = form.querySelector('input[name="id"]');
+            if(varInput) variantId = parseInt(varInput.value,10);
+          }
+        }
+        if(!variantId) return;
+        const item = items.find(it => it.variant_id === variantId);
+        const cartQty = item ? item.quantity : 0;
+
+        const isCollection = input.hasAttribute('data-collection-quantity-input');
+        const container = input.closest(isCollection ? 'collection-quantity-input' : '.quantity-input') || input.parentNode;
+        const plus = container ? container.querySelector(isCollection ? '[data-collection-quantity-selector="increase"]' : '[data-quantity-selector="increase"],[data-qty-change="inc"]') : null;
+        const minus = container ? container.querySelector(isCollection ? '[data-collection-quantity-selector="decrease"]' : '[data-quantity-selector="decrease"],[data-qty-change="dec"]') : null;
+        const valFn = isCollection ? window.collectionValidateAndHighlight : window.validateAndHighlightQty;
+        const updFn = isCollection ? window.collectionUpdateQtyButtonsState : window.updateQtyButtonsState;
+
+        if(cartQty >= max){
+          if(!input.dataset.cartLimited){
+            if(isCollection){
+              if(typeof window.collectionApplyCappedQtyState === 'function'){
+                window.collectionApplyCappedQtyState(input);
+              }
+            }else if(typeof window.applyCappedQtyState === 'function'){
+              window.applyCappedQtyState(input);
+            }
+            input.dataset.cartLimited = '1';
+          }
+          input.disabled = true;
+          input.readOnly = true;
+          if(plus) plus.disabled = true;
+          if(minus) minus.disabled = true;
+          if(updFn) updFn(input);
+        }else{
+          if(input.dataset.cartLimited){
+            input.disabled = false;
+            input.readOnly = false;
+            if(plus) plus.disabled = false;
+            if(minus) minus.disabled = false;
+            if(input.dataset.prevMin){
+              input.min = input.dataset.prevMin;
+              delete input.dataset.prevMin;
+            }
+            if(input.dataset.prevMinQtyAttr !== undefined){
+              var attr = isCollection ? 'data-collection-min-qty' : 'data-min-qty';
+              input.setAttribute(attr, input.dataset.prevMinQtyAttr);
+              delete input.dataset.prevMinQtyAttr;
+            }
+            input.classList.remove('text-red-600');
+            input.style.color = '';
+            delete input.dataset.cartLimited;
+          }
+          if(valFn) valFn(input);
+          if(updFn) updFn(input);
+        }
+      });
+    }catch(e){
+      // silently ignore errors
+    }
+  }
 
   function attachQtyInputListeners(){
     var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
@@ -330,6 +409,11 @@ var BUTTON_CLASS = 'double-qty-btn';
   window.addEventListener('shopify:section:load', initAll);
   window.addEventListener('shopify:cart:updated', initAll);
   window.addEventListener('shopify:product:updated', initAll);
+
+  document.addEventListener('DOMContentLoaded', checkCartLimits);
+  window.addEventListener('shopify:cart:updated', checkCartLimits);
+  window.addEventListener('shopify:section:load', checkCartLimits);
+  window.addEventListener('shopify:product:updated', checkCartLimits);
 
   window.doubleQtyInit = initDoubleQtyButtons;
 })();
