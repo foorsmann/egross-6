@@ -47,6 +47,11 @@
     if(!wrap) return;
     var plus = wrap.querySelector('[data-collection-quantity-selector="increase"]');
     var minus = wrap.querySelector('[data-collection-quantity-selector="decrease"]');
+    if(input.disabled || input.readOnly){
+      if(plus) plus.disabled = true;
+      if(minus) minus.disabled = true;
+      return;
+    }
     var max = input.max ? parseInt(input.max,10) : Infinity;
     var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
     var minQty = step;
@@ -118,6 +123,8 @@
     });
   }
   window.collectionApplyCappedQtyState = applyCappedQtyState;
+  window.collectionValidateAndHighlight = validateAndHighlight;
+  window.collectionUpdateQtyButtonsState = updateQtyButtonsState;
   function attachQtyInputListeners(){
     document.querySelectorAll('input[data-collection-quantity-input]').forEach(function(input){
       if(input.dataset.collectionQtyListener) return;
