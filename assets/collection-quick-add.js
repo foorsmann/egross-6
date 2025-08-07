@@ -76,9 +76,11 @@
       if(min && min > 0){
         input.min = 1;
         input.step = min;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
       }
+    });
+    document.querySelectorAll('input[data-collection-quantity-input]').forEach(function(input){
+      validateAndHighlight(input);
+      updateQtyButtonsState(input);
     });
   }
   function applyCappedQtyState(source){
@@ -118,27 +120,25 @@
     });
   }
   window.collectionApplyCappedQtyState = applyCappedQtyState;
-  function attachQtyInputListeners(){
-    document.querySelectorAll('input[data-collection-quantity-input]').forEach(function(input){
-      if(input.dataset.collectionQtyListener) return;
-      input.dataset.collectionQtyListener = '1';
-      ['input','change','blur'].forEach(function(ev){
-        input.addEventListener(ev, function(){
-          validateAndHighlight(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        });
-      });
-      input.addEventListener('keypress', function(e){
-        if(e.key === 'Enter'){
-          validateAndHighlight(input);
-          updateQtyButtonsState(input);
-          syncOtherQtyInputs(input);
-        }
-      });
+  var qtyInputDelegatesBound = false;
+  function bindQtyInputDelegates(){
+    if(qtyInputDelegatesBound) return;
+    qtyInputDelegatesBound = true;
+    function handle(e){
+      var input = e.target.closest('input[data-collection-quantity-input]');
+      if(!input) return;
       validateAndHighlight(input);
       updateQtyButtonsState(input);
-    });
+      syncOtherQtyInputs(input);
+      var btn = findBtnForInput(input);
+      if(btn) updateDoubleQtyBtnState(btn, input);
+    }
+    document.addEventListener('input', handle, true);
+    document.addEventListener('change', handle, true);
+    document.addEventListener('blur', handle, true);
+    document.addEventListener('keypress', function(e){
+      if(e.key === 'Enter') handle(e);
+    }, true);
   }
   function adjustQuantity(input, delta, baseVal){
     var stepAttr = input.getAttribute('data-collection-min-qty');
@@ -213,13 +213,14 @@
     if(noHighlightListenerBound) return;
     noHighlightListenerBound = true;
     document.addEventListener('click', function(e){
-      var btn = e.target.closest('.collection-add-to-cart, .collection-double-qty-btn, .collection-qty-button, .sf__btn');
+      var btn = e.target.closest('.collection-add-to-cart, [data-collection-double-qty], .collection-qty-button, .sf__btn');
       if(!btn || !btn.closest('.sf__pcard-quick-add-col')) return;
       clearTextSelection();
       btn.blur();
     }, true);
   }
-  function findQtyInput(btn){
+  function findInputForBtn(btn){
+    if(!btn || !btn.hasAttribute('data-collection-double-qty')) return null;
     var group = btn.closest('.collection-qty-group');
     if(group){
       var inp = group.querySelector('input[data-collection-quantity-input]');
@@ -231,59 +232,81 @@
     }
     return null;
   }
+  function findBtnForInput(input){
+    if(!input || !input.hasAttribute('data-collection-quantity-input')) return null;
+    var group = input.closest('.collection-qty-group');
+    if(group){
+      var btn = group.querySelector('[data-collection-double-qty]');
+      if(btn) return btn;
+    }
+    var pid = input.getAttribute('data-collection-product-id');
+    if(pid){
+      return document.querySelector('[data-collection-double-qty][data-collection-product-id="'+pid+'"]');
+    }
+    return null;
+  }
+  function updateDoubleQtyBtnState(btn, input){
+    if(!btn || !btn.hasAttribute('data-collection-double-qty')) return;
+    input = input || findInputForBtn(btn);
+    if(!input) return;
+    var max = input.max ? parseInt(input.max,10) : 9999;
+    var val = parseInt(input.value,10) || 1;
+    btn.disabled = val >= max;
+  }
   function initDoubleQtyButtons(){
-    document.querySelectorAll('.collection-double-qty-btn').forEach(function(btn){
-      var input = findQtyInput(btn);
+    document.querySelectorAll('[data-collection-double-qty]').forEach(function(btn){
+      var input = findInputForBtn(btn);
       if(!input) return;
-      var storedMin = parseInt(btn.getAttribute('data-collection-original-min-qty'),10);
-      var min;
-      if(isNaN(storedMin)){
-        min = parseInt(input.getAttribute('data-collection-min-qty'),10) || 1;
+      if(!btn.hasAttribute('data-collection-original-min-qty')){
+        var min = parseInt(input.getAttribute('data-collection-min-qty'),10) || 1;
         btn.setAttribute('data-collection-original-min-qty', min);
-      }else{
-        min = storedMin;
       }
+      var storedMin = parseInt(btn.getAttribute('data-collection-original-min-qty'),10);
       var template = btn.getAttribute('data-collection-label-template') || btn.textContent;
-      var label = template.replace('{min_qty}', min);
+      var label = template.replace('{min_qty}', storedMin);
       btn.setAttribute('aria-label', label);
       btn.textContent = label;
-      if(btn.dataset.collectionDoubleQtyActive) return;
-      btn.dataset.collectionDoubleQtyActive = '1';
-      function updateBtnState(){
-        var max = input.max ? parseInt(input.max,10) : 9999;
-        var val = parseInt(input.value,10) || 1;
-        btn.disabled = val >= max;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-      }
-      updateBtnState();
-      input.addEventListener('input', updateBtnState);
-      input.addEventListener('change', updateBtnState);
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
-        var max = input.max ? parseInt(input.max,10) : Infinity;
-        var current = parseInt(input.value,10);
-        if(isNaN(current)) current = 0;
-        var newVal = current + step;
-        if(newVal > max) newVal = max;
-        input.value = newVal;
-        validateAndHighlight(input);
-        updateQtyButtonsState(input);
-        input.dispatchEvent(new Event('input',{bubbles:true}));
-        input.dispatchEvent(new Event('change',{bubbles:true}));
-        updateBtnState();
-        clearTextSelection();
-        btn.blur();
-      });
-      btn.addEventListener('focus', function(){ btn.classList.add('focus'); });
-      btn.addEventListener('blur', function(){ btn.classList.remove('focus'); });
+      updateDoubleQtyBtnState(btn, input);
+    });
+  }
+  var doubleQtyDelegatesBound = false;
+  function bindDoubleQtyDelegates(){
+    if(doubleQtyDelegatesBound) return;
+    doubleQtyDelegatesBound = true;
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-collection-double-qty]');
+      if(!btn) return;
+      var input = findInputForBtn(btn);
+      if(!input) return;
+      e.preventDefault();
+      var step = parseInt(input.getAttribute('data-collection-min-qty'),10) || parseInt(input.step,10) || 1;
+      var max = input.max ? parseInt(input.max,10) : Infinity;
+      var current = parseInt(input.value,10);
+      if(isNaN(current)) current = 0;
+      var newVal = current + step;
+      if(newVal > max) newVal = max;
+      input.value = newVal;
+      validateAndHighlight(input);
+      updateQtyButtonsState(input);
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+      updateDoubleQtyBtnState(btn, input);
+      clearTextSelection();
+      btn.blur();
+    }, true);
+    document.addEventListener('focusin', function(e){
+      var btn = e.target.closest('[data-collection-double-qty]');
+      if(btn) btn.classList.add('focus');
+    });
+    document.addEventListener('focusout', function(e){
+      var btn = e.target.closest('[data-collection-double-qty]');
+      if(btn) btn.classList.remove('focus');
     });
   }
   function updateQtyGroupLayout(){
     document.querySelectorAll('.collection-qty-group').forEach(function(group){
       var input = group.querySelector('input[data-collection-quantity-input]');
-      var btn = group.querySelector('.collection-double-qty-btn');
+      var btn = group.querySelector('[data-collection-double-qty]');
       if(!input || !btn) return;
       group.classList.toggle('is-wrapped', btn.offsetTop > input.offsetTop);
     });
@@ -294,11 +317,19 @@
     if(qtyLayoutListenerBound) return;
     qtyLayoutListenerBound = true;
     window.addEventListener('resize', updateQtyGroupLayout);
+    document.querySelectorAll('.sf-collection-list, .collection-listing, .swiper-container, .swiper-wrapper').forEach(function(container){
+      new MutationObserver(function(){
+        applyMinQty();
+        initDoubleQtyButtons();
+        updateQtyGroupLayout();
+      }).observe(container,{childList:true,subtree:true});
+    });
   }
   function initAll(){
     applyMinQty();
     initDoubleQtyButtons();
-    attachQtyInputListeners();
+    bindQtyInputDelegates();
+    bindDoubleQtyDelegates();
     attachQtyButtonListeners();
     attachNoHighlightListeners();
     watchQtyGroupLayout();
@@ -332,7 +363,9 @@
         return;
       }
       const qtyInput = this.form.querySelector('input[name="quantity"]');
-      const requestedQty = parseInt(formData.get('quantity')) || 1;
+      let requestedQty = parseInt(qtyInput && qtyInput.value,10);
+      if(!requestedQty || isNaN(requestedQty)) requestedQty = 1;
+      formData.set('quantity', requestedQty);
       const maxQty = parseInt(qtyInput?.max) || Infinity;
       let cartQty = 0;
       try{
