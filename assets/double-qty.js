@@ -235,6 +235,101 @@ async function checkCartLimits(){
   }
 }
 
+  async function checkCartLimits(){
+    try{
+      const cart = await fetch('/cart.js').then(r => r.json());
+      const items = cart.items || [];
+      document.querySelectorAll('input[data-quantity-input], input[data-collection-quantity-input]').forEach(function(input){
+        if(input.closest('.scd-item') || input.closest('[data-cart-item]')) return;
+        let variantId = null;
+        if(input.dataset.variantId){
+          variantId = parseInt(input.dataset.variantId,10);
+        }
+        if(!variantId){
+          const form = input.closest('form');
+          if(form){
+            const varInput = form.querySelector('input[name="id"]');
+            if(varInput) variantId = parseInt(varInput.value,10);
+          }
+        }
+        if(!variantId) return;
+
+        // max available stock for this variant
+        if(!input.dataset.originalMax || input.dataset.storedVariantId !== String(variantId)){
+          const attrMax = parseInt(input.getAttribute('max'),10);
+          if(!attrMax || !isFinite(attrMax)) return;
+          input.dataset.originalMax = attrMax;
+          input.dataset.storedVariantId = String(variantId);
+        }
+        const maxQty = parseInt(input.dataset.originalMax,10);
+        if(!maxQty || !isFinite(maxQty)) return;
+
+        const item = items.find(it => it.variant_id === variantId);
+        const cartQty = item ? item.quantity : 0;
+        const available = Math.max(maxQty - cartQty, 0);
+
+        const isCollection = input.hasAttribute('data-collection-quantity-input');
+        const container = input.closest(isCollection ? 'collection-quantity-input' : '.quantity-input') || input.parentNode;
+        const plus = container ? container.querySelector(isCollection ? '[data-collection-quantity-selector="increase"]' : '[data-quantity-selector="increase"],[data-qty-change="inc"]') : null;
+        const minus = container ? container.querySelector(isCollection ? '[data-collection-quantity-selector="decrease"]' : '[data-quantity-selector="decrease"],[data-qty-change="dec"]') : null;
+        const valFn = isCollection ? window.collectionValidateAndHighlight : window.validateAndHighlightQty;
+        const updFn = isCollection ? window.collectionUpdateQtyButtonsState : window.updateQtyButtonsState;
+
+        if(cartQty >= maxQty){
+          if(!input.dataset.cartLimited){
+            if(isCollection){
+              if(typeof window.collectionApplyCappedQtyState === 'function'){
+                window.collectionApplyCappedQtyState(input);
+              }
+            }else if(typeof window.applyCappedQtyState === 'function'){
+              window.applyCappedQtyState(input);
+            }
+            input.dataset.cartLimited = '1';
+          }
+          input.disabled = true;
+          input.readOnly = true;
+          if(plus) plus.disabled = true;
+          if(minus) minus.disabled = true;
+          if(updFn) updFn(input);
+        }else{
+          if(input.dataset.cartLimited){
+            input.disabled = false;
+            input.readOnly = false;
+            if(plus) plus.disabled = false;
+            if(minus) minus.disabled = false;
+            if(input.dataset.prevMin){
+              input.min = input.dataset.prevMin;
+              delete input.dataset.prevMin;
+            }
+            if(input.dataset.prevMinQtyAttr !== undefined){
+              var attr = isCollection ? 'data-collection-min-qty' : 'data-min-qty';
+              input.setAttribute(attr, input.dataset.prevMinQtyAttr);
+              delete input.dataset.prevMinQtyAttr;
+            }
+            input.classList.remove('text-red-600');
+            input.style.color = '';
+            delete input.dataset.cartLimited;
+          }
+
+          // refresh max attribute to remaining stock
+          input.max = available;
+          var minAttr = isCollection ? 'data-collection-min-qty' : 'data-min-qty';
+          var minQty = parseInt(input.getAttribute(minAttr),10) || parseInt(input.step,10) || 1;
+          var newVal = available < minQty ? available : minQty;
+          input.value = newVal;
+
+          if(valFn) valFn(input);
+          if(updFn) updFn(input);
+          if(!isCollection && typeof window.syncOtherQtyInputs === 'function'){
+            window.syncOtherQtyInputs(input);
+          }
+        }
+      });
+    }catch(e){
+      // silently ignore errors
+    }
+  }
+
   function attachQtyInputListeners(){
     var selectors = '.quantity-input__element, .scd-item__qty_input, input[data-quantity-input]';
     document.querySelectorAll(selectors).forEach(function(input){
